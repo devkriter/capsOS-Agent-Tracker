@@ -22,8 +22,6 @@ cp "$BIN_DIR/$APP_NAME" "$APP_DIR/Contents/MacOS/$APP_NAME"
 cp "$BIN_DIR/caps-signal" "$APP_DIR/Contents/MacOS/caps-signal"
 chmod +x "$APP_DIR/Contents/MacOS/$APP_NAME" "$APP_DIR/Contents/MacOS/caps-signal"
 cp "$SCRIPT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
-cp "$SCRIPT_DIR/hooks/capslock-notify.sh" "$APP_DIR/Contents/Resources/capslock-notify.sh"
-chmod +x "$APP_DIR/Contents/Resources/capslock-notify.sh"
 
 cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

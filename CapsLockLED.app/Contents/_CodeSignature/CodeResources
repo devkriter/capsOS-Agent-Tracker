@@ -8,10 +8,6 @@
 		<data>
 		vmuSMuZMsye92eu36qVFXNl+oco=
 		</data>
-		<key>Resources/capslock-notify.sh</key>
-		<data>
-		TCYgMZlMndnfegMOyxZ0pqaBvag=
-		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
@@ -19,7 +15,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			z4QItC7/1CjTFM/3nZLbqezK3wM=
+			s0d86kJPG0nlUdi1VHHhDULMCv0=
 			</data>
 			<key>requirement</key>
 			<string>identifier "caps-signal" and certificate leaf = H"878f787bae273e7f0fa81bc67a5e31cf0f776c6c"</string>
@@ -29,13 +25,6 @@
 			<key>hash2</key>
 			<data>
 			Jpx39i1i1MX5B4zYuk0WX1+mlNYS8Nck/x/Rm8kA1Q8=
-			</data>
-		</dict>
-		<key>Resources/capslock-notify.sh</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			e+0079qFBkw8o9ga2PqU8YT8QCK+lTX23o/dAdc4PFc=
 			</data>
 		</dict>
 	</dict>

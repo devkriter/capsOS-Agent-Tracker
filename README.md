@@ -118,11 +118,11 @@ Built as a Swift Package (no Xcode project needed — just Command Line Tools).
   (`Contents/MacOS/caps-signal`). Claude Code hooks call it; it posts a
   `DistributedNotificationCenter` message that the running app reacts to. It
   needs no permissions of its own.
-- `Contents/Resources/capslock-notify.sh` — the `Notification` hook. It reads
-  the hook JSON on stdin (pure bash + `sed`, no python/jq) and only fires the
-  "needs input" signal for notification types that mean Claude is genuinely
-  blocked (`permission_prompt`, `idle_prompt`, `agent_needs_input`,
-  `elicitation_dialog`).
+- The `Notification` hook is scoped with a **matcher** so Claude Code only runs
+  it for notification types that mean Claude is genuinely blocked on you
+  (`permission_prompt`, `idle_prompt`, `agent_needs_input`,
+  `elicitation_dialog`) — it fires `caps-signal needs-input` directly, so
+  there's no stdin JSON parsing.
 - `HookInstaller.swift` — the "Set Up Claude Code Hooks" logic. Also runnable
   headless: `CapsLockLED --setup-hooks` / `--remove-hooks`. It merges three
   hooks into `~/.claude/settings.json`, pointing at the app's own bundle, and
@@ -131,7 +131,7 @@ Built as a Swift Package (no Xcode project needed — just Command Line Tools).
 **Hooks installed**
 - `UserPromptSubmit` → `caps-signal working`
 - `Stop` → `caps-signal done`
-- `Notification` → `capslock-notify.sh` (→ `caps-signal needs-input`)
+- `Notification` (matcher `permission_prompt|idle_prompt|agent_needs_input|elicitation_dialog`) → `caps-signal needs-input`
 
 **Code signing note.** `build.sh` signs with a local self-signed identity
 ("CapsLockLED Dev") if present, otherwise falls back to ad-hoc. A *stable*

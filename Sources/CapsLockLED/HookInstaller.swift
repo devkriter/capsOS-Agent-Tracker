@@ -1,9 +1,9 @@
 import Foundation
 
 /// Writes the three Claude Code hooks into ~/.claude/settings.json, pointing
-/// them at this app bundle's own caps-signal / notify script. Safe to run
-/// repeatedly: it merges into any existing settings and only touches the
-/// three hook events it owns, preserving everything else (theme, other hooks).
+/// them at this app bundle's own caps-signal helper. Safe to run repeatedly:
+/// it merges into any existing settings and only touches the three hook events
+/// it owns, preserving everything else (theme, other hooks).
 enum HookInstaller {
     struct InstallError: LocalizedError {
         let message: String
@@ -54,7 +54,6 @@ enum HookInstaller {
             throw InstallError(message: "CapsLockLED is installed in a folder whose path contains spaces:\n\n\(bundlePath)\n\nMove it to /Applications (drag it there) and try again — hook commands can't handle spaces in the path.")
         }
         let capsSignal = bundlePath + "/Contents/MacOS/caps-signal"
-        let notifyScript = bundlePath + "/Contents/Resources/capslock-notify.sh"
 
         hooks["UserPromptSubmit"] = mergeOurEntry(
             into: hooks["UserPromptSubmit"],
@@ -64,9 +63,13 @@ enum HookInstaller {
             into: hooks["Stop"],
             command: capsSignal + " done"
         )
+        // Claude Code filters Notification hooks by matcher (the notification
+        // type), so we only fire "needs input" for the types that mean Claude
+        // is genuinely blocked on the user — no stdin parsing required.
         hooks["Notification"] = mergeOurEntry(
             into: hooks["Notification"],
-            command: notifyScript
+            command: capsSignal + " needs-input",
+            matcher: "permission_prompt|idle_prompt|agent_needs_input|elicitation_dialog"
         )
         settings["hooks"] = hooks
 
@@ -74,9 +77,10 @@ enum HookInstaller {
         return "Claude Code hooks installed in ~/.claude/settings.json.\n\n• Working  → LED slow-blinks\n• Waiting on you → LED fast-blinks\n• Done → LED double-flashes\n\nStart a NEW Claude Code session for the hooks to take effect. Keep CapsLockLED running (turn on \"Launch at Login\") so it can drive the LED."
     }
 
-    // We recognise our own entries by the command they run — no non-standard
-    // keys are written into settings.json, so nothing can trip hook-schema
-    // validation.
+    // We recognise our own entries by the command they run, using only standard
+    // hook keys (matcher/hooks/type/command) so nothing can trip hook-schema
+    // validation. The `capslock-notify.sh` clause matches entries written by
+    // older versions so a re-run cleanly upgrades them.
     private static func entryBelongsToUs(_ entry: [String: Any]) -> Bool {
         guard let inner = entry["hooks"] as? [[String: Any]] else { return false }
         return inner.contains { hook in
@@ -87,13 +91,17 @@ enum HookInstaller {
     }
 
     /// Replaces our previous entry for this event (if any) and appends the new
-    /// one, leaving any unrelated entries the user has for the same event.
-    private static func mergeOurEntry(into existing: Any?, command: String) -> [[String: Any]] {
+    /// one, leaving any unrelated entries the user has for the same event. When
+    /// `matcher` is set it's written so Claude Code only runs the hook for those
+    /// notification types.
+    private static func mergeOurEntry(into existing: Any?, command: String, matcher: String? = nil) -> [[String: Any]] {
         var entries = (existing as? [[String: Any]]) ?? []
         entries.removeAll(where: entryBelongsToUs)
-        entries.append([
-            "hooks": [["type": "command", "command": command]]
-        ])
+        var entry: [String: Any] = ["hooks": [["type": "command", "command": command]]]
+        if let matcher = matcher {
+            entry["matcher"] = matcher
+        }
+        entries.append(entry)
         return entries
     }
 
