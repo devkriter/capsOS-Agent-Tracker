@@ -64,16 +64,16 @@ enum HookInstaller {
             command: capsSignal + " done"
         )
         // Claude Code filters Notification hooks by matcher (the notification
-        // type). We fire "needs input" only for prompts that actually block on
-        // you: a permission request or an elicitation dialog. idle_prompt is
-        // deliberately excluded — it fires the instant the agent finishes and
-        // goes idle, which would turn every "done" into a false "needs you"
-        // alarm. (agent_needs_input is likewise left out — noisy across many
-        // concurrent sessions.) The app also caps how long the fast-blink lasts.
+        // type). We fire "needs input" for exactly the prompts where work
+        // stalls until you act: a permission request, an elicitation dialog, or
+        // an agent that needs your input. idle_prompt is deliberately excluded —
+        // it fires the instant the agent finishes and goes idle, so including it
+        // would turn every "done" into a false "needs you" alarm. The app also
+        // caps how long the fast-blink lasts.
         hooks["Notification"] = mergeOurEntry(
             into: hooks["Notification"],
             command: capsSignal + " needs-input",
-            matcher: "permission_prompt|elicitation_dialog"
+            matcher: "permission_prompt|elicitation_dialog|agent_needs_input"
         )
         settings["hooks"] = hooks
 
