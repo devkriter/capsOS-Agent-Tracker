@@ -45,6 +45,14 @@ final class BlinkEngine {
         }
     }
 
+    /// Cancels any running blink or pending auto-clear without touching the
+    /// LED, so the caller can leave the light in a specific final state (used
+    /// at shutdown, where we restore the LED to the real Caps Lock state).
+    func stop() {
+        stopTimer()
+        state = .idle
+    }
+
     private func startBlinking(interval: TimeInterval) {
         isOn = true
         setLED(true)

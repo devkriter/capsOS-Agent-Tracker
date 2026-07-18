@@ -31,6 +31,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshDiagnostics()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        // Stop driving the light, then leave the physical Caps Lock LED
+        // matching the real modifier state. Otherwise a mid-blink quit would
+        // leave the light stuck on while Caps Lock is actually off (or off
+        // while it's on) until the next time the user toggles the key.
+        blinkEngine.stop()
+        ledController.setLED(on: NSEvent.modifierFlags.contains(.capsLock))
+    }
+
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.isVisible = true
