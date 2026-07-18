@@ -119,12 +119,13 @@ Built as a Swift Package (no Xcode project needed — just Command Line Tools).
   `DistributedNotificationCenter` message that the running app reacts to. It
   needs no permissions of its own.
 - The `Notification` hook is scoped with a **matcher** so Claude Code only runs
-  it for notification types that wait on you (`permission_prompt`,
-  `idle_prompt`, `elicitation_dialog`) — it fires `caps-signal needs-input`
-  directly, so there's no stdin JSON parsing. Because the hooks are global to
-  every session, the fast "needs input" blink **self-clears** after a timeout
-  (`BlinkEngine.needsInputTimeout`) so a backgrounded, idle session can't leave
-  the light stuck on.
+  it for prompts that actually block on you (`permission_prompt`,
+  `elicitation_dialog`) — it fires `caps-signal needs-input` directly, so
+  there's no stdin JSON parsing. `idle_prompt` is intentionally excluded: it
+  fires the moment the agent finishes and goes idle, so including it would turn
+  every "done" into a false "needs you" alarm. The fast "needs input" blink
+  also **self-clears** after a timeout (`BlinkEngine.needsInputTimeout`) so a
+  stray notification can't leave the light stuck on.
 - `HookInstaller.swift` — the "Set Up Claude Code Hooks" logic. Also runnable
   headless: `CapsLockLED --setup-hooks` / `--remove-hooks`. It merges three
   hooks into `~/.claude/settings.json`, pointing at the app's own bundle, and
@@ -133,7 +134,7 @@ Built as a Swift Package (no Xcode project needed — just Command Line Tools).
 **Hooks installed**
 - `UserPromptSubmit` → `caps-signal working`
 - `Stop` → `caps-signal done`
-- `Notification` (matcher `permission_prompt|idle_prompt|elicitation_dialog`) → `caps-signal needs-input` (fast blink self-clears after a timeout)
+- `Notification` (matcher `permission_prompt|elicitation_dialog`) → `caps-signal needs-input` (fast blink self-clears after a timeout)
 
 **Code signing note.** `build.sh` signs with a local self-signed identity
 ("CapsLockLED Dev") if present, otherwise falls back to ad-hoc. A *stable*
