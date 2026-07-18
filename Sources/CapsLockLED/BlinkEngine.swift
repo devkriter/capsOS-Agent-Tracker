@@ -11,8 +11,15 @@ enum LEDState: String {
 final class BlinkEngine {
     private let led: LEDController
     private var timer: DispatchSourceTimer?
+    private var autoClear: DispatchWorkItem?
     private var isOn = false
     private(set) var state: LEDState = .idle
+
+    // How long the fast "needs input" blink runs before clearing itself to off.
+    // The hooks are global, so a background session going idle can fire
+    // "needs-input"; without this cap the light would latch on until some
+    // session happened to send another signal.
+    private let needsInputTimeout: TimeInterval = 10
 
     var onStateChange: ((LEDState) -> Void)?
 
@@ -32,6 +39,7 @@ final class BlinkEngine {
             startBlinking(interval: 0.5)
         case .needsInput:
             startBlinking(interval: 0.1)
+            scheduleAutoClear(after: needsInputTimeout)
         case .done:
             playDoneSequence()
         }
@@ -49,6 +57,18 @@ final class BlinkEngine {
         }
         t.resume()
         timer = t
+    }
+
+    /// Caps the fast "needs input" blink: if nothing supersedes it within the
+    /// timeout, fall back to idle so the light never sticks on. A fresh
+    /// needs-input signal reschedules this (via stopTimer + setState).
+    private func scheduleAutoClear(after seconds: TimeInterval) {
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self, self.state == .needsInput else { return }
+            self.setState(.idle)
+        }
+        autoClear = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: work)
     }
 
     /// Two quick flashes, then back to idle. Runs on the main queue so
@@ -73,6 +93,8 @@ final class BlinkEngine {
     private func stopTimer() {
         timer?.cancel()
         timer = nil
+        autoClear?.cancel()
+        autoClear = nil
     }
 
     private func setLED(_ on: Bool) {
